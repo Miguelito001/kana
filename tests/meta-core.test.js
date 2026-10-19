@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');const core=require('../dist/meta-core.js');
+let state=core.emptyState();
+const event=(correct,at=Date.UTC(2026,8,1))=>({mode:'kanji',item:{id:'朝',written:'朝',reading:'あさ'},contentId:'朝',correct,requiresPortuguese:false,at});
+for(let i=0;i<8;i++)state=core.recordAttempt(state,event(i>=4));
+assert.equal(state.items['kanji:朝'].cursed,true,'erro persistente cria maldição somente após evidência suficiente');
+for(let i=0;i<12;i++)state=core.recordAttempt(state,event(true,Date.UTC(2026,8,2)+i));
+assert.equal(state.items['kanji:朝'].cursed,false,'recuperação consistente quebra maldição');
+assert.ok(state.achievements.some(item=>item.id==='first-curse-broken'));
+for(let day=0;day<2;day++)for(let i=0;i<4;i++)state=core.recordDeath(state,{mode:'insanity',itemId:'rare',display:'盤渉調',reading:'ばんしきちょう',runLength:100+i,answer:'x',at:Date.UTC(2026,8,3+day)});
+assert.equal(state.cemetery[0].deaths,8);assert.ok(state.nemeses['insanity:rare'],'Nemesis exige mortes, erros e dias distintos');
+assert.equal(core.dependency([{requiresPortuguese:false,correct:true},{requiresPortuguese:false,correct:false}]).value,50);
+const skills={'hiragana:あ':{attempts:50,mastery:5},'katakana:ア':{attempts:25,mastery:4},'grammar:g1':{attempts:25,mastery:3}};
+assert.equal(core.bossMetrics(state,skills,{}).unlocked,true);
+state=core.finishBoss(state,6,100);assert.ok(state.bosses.boundary.completedAt);assert.ok(state.achievements.some(item=>item.id==='first-boss'));
+assert.equal(core.BOUNDARY.length,7);assert.equal(new Set(core.BOUNDARY.map(item=>item.territory)).size,7);
+console.log('META: maldições, Nemesis, Cemitério, perfil e Boss aprovados');

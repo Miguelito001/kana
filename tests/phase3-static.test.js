@@ -1,0 +1,16 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+for(const file of ['dist/phase3-core.js','dist/phase3-ui.js'])new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const html=fs.readFileSync('dist/index.html','utf8'),ui=fs.readFileSync('dist/phase3-ui.js','utf8'),auth=fs.readFileSync('dist/auth-sync.js','utf8');
+for(const needle of ['phase3-core.js','phase3-ui.js'])assert.ok(html.includes(needle));
+for(const needle of ['FRACTURE','VOID','LABYRINTH','BrowserAudioProvider','KANA_AUDIO_PROVIDER','speechSynthesis'])assert.ok(ui.includes(needle),needle);
+for(const dimension of ['grammaticalUsage','audioMeaning','context'])assert.ok(auth.includes(dimension),dimension);
+assert.ok(ui.includes('KANA_GRAMMAR_CAPABILITIES?.unlock'),'gramática precisa liberar capacidades consumidas pelo vocabulário');
+assert.ok(ui.includes("mode==='void'?'▶ reproduzindo…'"),'VOID não expõe repetição');
+assert.ok(html.includes(".mode[data-mode]"),'cards da fase 3 não podem cair no roteador dos modos antigos');
+assert.ok(ui.includes('kana:remote-restored'),'estatísticas remotas precisam atualizar os novos territórios');
+assert.ok(ui.includes('selectAdaptive'),'sessões novas precisam variar e considerar domínio');
+assert.ok(!ui.includes('source()[turn%source().length]'),'ordem fixa não pode reaparecer');
+assert.ok(ui.includes('isEndgame()&&turn>=maxQuestions()'),'somente desafios possuem limite automático');
+assert.ok(ui.includes("isEndgame()?maxQuestions():source().length"),'treino normal percorre o banco completo');
+assert.ok(ui.includes("if(!correct&&!isEndgame())"),'erro em treino normal permite tentar novamente');
+console.log('FASE 3: integração, áudio e dimensões separadas aprovados');

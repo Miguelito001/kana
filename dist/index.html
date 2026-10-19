@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="description" content="Treino rápido de hiragana, katakana e kanji.">
+  <title>Kana — treino rápido</title>
+  <style>
+    :root { color-scheme: dark; --bg:#09090b; --panel:#141416; --line:#2a2a2f; --ink:#f7f7f5; --muted:#919198; --red:#ff5353; --green:#71e5ad; }
+    * { box-sizing:border-box; }
+    html, body { margin:0; min-height:100%; background:var(--bg); color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height:100dvh; overflow-x:hidden; }
+    button, input { font:inherit; }
+    button { color:inherit; }
+    .app { min-height:100dvh; display:grid; grid-template-rows:auto 1fr; max-width:680px; margin:auto; padding:max(18px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); }
+    header { display:flex; align-items:center; justify-content:space-between; min-height:48px; }
+    .brand { font-weight:800; letter-spacing:-.04em; font-size:1.15rem; }
+    .brand i { color:var(--red); font-style:normal; }
+    .header-actions { display:flex; align-items:center; gap:8px; }
+    .study-link { border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:9px 13px; cursor:pointer; font-weight:800; }
+    .account-status { border:0; background:transparent; color:var(--muted); padding:9px 3px; cursor:pointer; font-size:.75rem; font-weight:800; white-space:nowrap; }
+    .account-status:hover { color:var(--ink); }
+    .modal-open { overflow:hidden; }
+    .account-modal { position:fixed; inset:0; z-index:20; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); backdrop-filter:blur(8px); }
+    .account-dialog { position:relative; width:min(100%,440px); padding:28px; border:1px solid var(--line); border-radius:22px; background:#111113; box-shadow:0 28px 80px rgba(0,0,0,.5); }
+    .account-dialog h2 { font-size:2rem; letter-spacing:-.045em; margin:0 0 12px; }
+    .account-dialog p { color:var(--muted); line-height:1.5; }
+    .account-dialog form { margin-top:20px; }
+    .account-close { position:absolute; right:13px; top:10px; border:0; background:transparent; color:var(--muted); font-size:1.7rem; cursor:pointer; }
+    .account-signout { width:100%; margin-top:10px; border:1px solid var(--line); border-radius:17px; background:transparent; color:var(--muted); padding:14px; cursor:pointer; font-weight:800; }
+    .account-secondary { width:100%; margin-top:10px; border:1px solid var(--line); border-radius:17px; background:transparent; color:var(--ink); padding:14px; cursor:pointer; font-weight:800; }
+    .account-link { width:100%; border:0; background:transparent; color:var(--muted); padding:14px 4px 2px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+    #accountPassword, #newPassword { margin-top:10px; }
+    #passwordForm { margin:18px 0; }
+    .account-feedback { min-height:24px; margin:14px 0 0 !important; font-size:.86rem; }
+    #accountEmailLabel { display:block; margin:18px 0 5px; overflow-wrap:anywhere; }
+    .back { border:0; background:transparent; color:var(--muted); padding:10px 0; cursor:pointer; font-weight:700; }
+    .back:hover { color:var(--ink); }
+    main { display:grid; align-items:center; padding:24px 0 6vh; }
+    .screen { width:100%; animation:enter .28s ease both; }
+    [hidden] { display:none !important; }
+    @keyframes enter { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+    .eyebrow { color:var(--red); font-size:.78rem; font-weight:850; letter-spacing:.15em; text-transform:uppercase; margin:0 0 12px; }
+    h1 { font-size:clamp(2.3rem, 10vw, 4.8rem); line-height:.96; letter-spacing:-.065em; margin:0 0 18px; max-width:600px; }
+    .intro { margin:0 0 34px; color:var(--muted); font-size:1.02rem; line-height:1.55; }
+    .answer-method { margin-bottom:24px; }
+    .answer-method > span { display:block; color:var(--muted); font-size:.86rem; font-weight:750; margin-bottom:9px; }
+    .method-options { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:6px; border:1px solid var(--line); border-radius:16px; background:var(--panel); }
+    .method { border:0; border-radius:11px; padding:12px 9px; background:transparent; color:var(--muted); cursor:pointer; font-weight:850; }
+    .method.active { background:var(--ink); color:#101012; }
+    .modes { display:grid; gap:12px; }
+    .history-block { margin-top:18px; }
+    .last-session { width:100%; padding:15px 17px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.025); color:var(--ink); display:flex; align-items:center; justify-content:space-between; gap:16px; cursor:pointer; text-align:left; }
+    .last-session span { color:var(--muted); font-size:.9rem; }
+    .last-session strong { font-size:.95rem; white-space:nowrap; }
+    .history-arrow { color:var(--muted); transition:transform .18s ease; }
+    .last-session[aria-expanded="true"] .history-arrow { transform:rotate(180deg); }
+    .last-errors { margin-top:8px; padding:8px; border:1px solid var(--line); border-radius:16px; background:var(--panel); }
+    .last-errors h2 { font-size:.92rem; margin:7px 7px 10px; }
+    .error-item { display:grid; grid-template-columns:auto 1fr; gap:11px; align-items:center; padding:10px 8px; border-top:1px solid var(--line); }
+    .error-item:first-of-type { border-top:0; }
+    .error-symbol { font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:1.8rem; min-width:42px; text-align:center; }
+    .error-info { min-width:0; font-size:.82rem; line-height:1.45; }
+    .error-given { color:var(--red); }
+    .error-correct { color:var(--green); }
+    .perfect-session { color:var(--green); padding:12px 8px; margin:0; font-weight:800; font-size:.88rem; }
+    .daily-ranking { margin-top:18px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+    .ranking-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .ranking-head h2 { font-size:1rem; margin:0; }
+    .ranking-head span { color:var(--muted); font-size:.75rem; }
+    .rank-row { display:grid; grid-template-columns:28px 1fr auto; gap:9px; align-items:center; min-height:44px; border-top:1px solid var(--line); font-size:.86rem; }
+    .rank-position { color:var(--muted); font-weight:850; }
+    .rank-date.today { color:var(--green); font-weight:850; }
+    .rank-score { text-align:right; font-weight:900; }
+    .rank-score small { display:block; color:var(--muted); font-weight:650; font-size:.68rem; margin-top:2px; }
+    .empty-ranking { color:var(--muted); font-size:.84rem; margin:14px 0 2px; }
+    .vocab-today { margin:4px 0 12px; padding:12px; border-radius:13px; background:rgba(113,229,173,.055); }
+    .vocab-today strong { display:block; color:var(--green); font-size:1.05rem; }
+    .vocab-today span { display:block; color:var(--muted); font-size:.76rem; margin-top:4px; line-height:1.4; }
+    .mode { width:100%; min-height:96px; padding:18px 20px; border:1px solid var(--line); border-radius:20px; background:var(--panel); display:grid; grid-template-columns:1fr auto; align-items:center; text-align:left; cursor:pointer; transition:.18s ease; }
+    .mode:hover, .mode:focus-visible { border-color:#48484f; transform:translateY(-2px); outline:none; }
+    .mode:active { transform:scale(.985); }
+    .mode strong { display:block; font-size:1.25rem; margin-bottom:5px; }
+    .mode small { color:var(--muted); font-size:.9rem; }
+    .sample { font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:2.45rem; line-height:1; }
+    .game { text-align:center; }
+    .game-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:24px; }
+    .mode-name { color:var(--muted); font-weight:750; font-size:.78rem; letter-spacing:.07em; text-transform:uppercase; text-align:left; }
+    .score { display:flex; gap:8px; font-weight:850; font-size:.88rem; white-space:nowrap; }
+    .score span { padding:7px 10px; border:1px solid var(--line); border-radius:999px; }
+    .score .hits { color:var(--green); }
+    .score .misses { color:var(--red); }
+    .glyph { font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:clamp(7.5rem, 38vw, 13rem); line-height:.92; font-weight:550; letter-spacing:-.07em; margin:0 0 12px; text-shadow:0 0 54px rgba(255,255,255,.055); }
+    .meaning { min-height:28px; margin:0 0 28px; color:var(--muted); font-size:1rem; font-weight:750; }
+    .vocab-prompt { margin-bottom:28px; }
+    .vocab-word { font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:clamp(4.2rem, 22vw, 7.2rem); line-height:1.05; font-weight:600; letter-spacing:-.05em; overflow-wrap:anywhere; }
+    .vocab-reading { min-height:30px; color:var(--muted); font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:1.25rem; font-weight:750; margin-top:10px; }
+    .vocab-question { margin-top:24px; font-weight:850; }
+    .levels { align-self:start; padding-top:18px; }
+    .levels h1 { font-size:clamp(2.2rem, 9vw, 4rem); margin-bottom:10px; }
+    .level-list { display:grid; gap:12px; }
+    .level-card { width:100%; border:1px solid var(--line); border-radius:20px; background:var(--panel); padding:18px; text-align:left; cursor:pointer; }
+    .level-card strong { display:block; font-size:1.15rem; margin-bottom:5px; }
+    .level-card span { color:var(--muted); font-size:.88rem; }
+    .level-card small { display:block; color:var(--green); margin-top:12px; font-weight:800; }
+    .level-card.locked { opacity:.48; cursor:not-allowed; }
+    .territory-screen { align-self:start; padding-top:18px; }
+    .territory-screen h1 { font-size:clamp(2.2rem,9vw,4rem); margin-bottom:10px; }
+    .endgame-card { position:relative; overflow:hidden; }
+    .endgame-card small { color:var(--red); letter-spacing:.14em; font-size:.68rem; margin:0 0 9px; }
+    .endgame-card.hiragana { border-color:rgba(255,83,83,.42); background:linear-gradient(135deg,rgba(255,83,83,.09),var(--panel)); }
+    .endgame-card.katakana { border-color:rgba(100,170,255,.42); background:linear-gradient(135deg,rgba(82,145,255,.09),var(--panel)); }
+    .endgame-card.kanji { border-color:rgba(190,120,255,.35); }
+    .challenge-screen { text-align:center; }
+    .challenge-title { font-size:clamp(3rem,15vw,6rem); letter-spacing:.04em; }
+    .challenge-record { margin:0 0 18px; color:var(--muted); font-weight:800; }
+    .challenge-start { width:100%; border:0; border-radius:17px; background:var(--ink); color:#101012; font-weight:950; padding:17px; cursor:pointer; }
+    .challenge-head { display:flex; justify-content:space-between; color:var(--muted); font-size:.8rem; font-weight:900; letter-spacing:.1em; margin-bottom:18px; }
+    .timer-track { height:5px; overflow:hidden; border-radius:999px; background:#2b181b; margin-bottom:clamp(24px,8vh,62px); }
+    .timer-track i { display:block; width:100%; height:100%; background:var(--red); }
+    .challenge-glyph { font-family:"Noto Sans JP","Yu Gothic",sans-serif; font-size:clamp(4.7rem,23vw,9rem); line-height:1.05; overflow-wrap:anywhere; margin-bottom:18px; }
+    .challenge-prompt { color:var(--muted); font-weight:800; margin:0 0 20px; }
+    .challenge-number { display:block; font-size:clamp(5rem,28vw,10rem); line-height:.9; letter-spacing:-.07em; margin:12px 0 18px; }
+    .level-card.nerd { border-color:rgba(139,92,246,.55); background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(52,211,153,.06)); }
+    .level-card.nerd strong { color:#c4b5fd; }
+    .dictionary-source { font-size:.78rem; color:var(--muted); line-height:1.5; margin:.2rem .2rem 0; }
+    .dictionary-source a { color:var(--green); text-underline-offset:3px; }
+    .dictionary-attribution { text-align:center; font-size:.72rem; color:var(--muted); margin-top:1rem; }
+    .dictionary-attribution a { color:inherit; }
+    .insanity-card { position:relative; overflow:hidden; border-color:#53232b; background:linear-gradient(145deg,#1b1013,var(--panel) 62%); }
+    .insanity-card::after { content:'死'; position:absolute; right:16px; top:7px; color:rgba(255,83,83,.075); font-family:"Noto Sans JP",sans-serif; font-size:5.8rem; font-weight:900; pointer-events:none; }
+    .insanity-card.unlocked { border-color:var(--red); box-shadow:inset 0 0 38px rgba(255,83,83,.045); }
+    .insanity-card strong { color:#ff7b7b; letter-spacing:.04em; }
+    .insanity-badge { display:inline-block; margin-bottom:8px; color:var(--red); font-size:.7rem; font-weight:950; letter-spacing:.13em; text-transform:uppercase; }
+    .insanity-requirements { display:grid; gap:9px; margin-top:15px; max-width:480px; }
+    .requirement-line { display:grid; grid-template-columns:1fr auto; gap:10px; color:var(--muted); font-size:.76rem; font-weight:750; }
+    .requirement-line b { color:var(--ink); }
+    .requirement-track { grid-column:1/-1; height:4px; border-radius:999px; overflow:hidden; background:#321c20; }
+    .requirement-fill { display:block; height:100%; width:0; background:var(--red); transition:width .35s ease; }
+    .insanity-screen { align-self:center; text-align:center; }
+    .insanity-panel { width:100%; max-width:560px; margin:auto; }
+    .insanity-title { color:var(--red); font-size:clamp(2.8rem,14vw,5.6rem); letter-spacing:.08em; margin-bottom:15px; }
+    .insanity-copy { color:var(--muted); font-size:1rem; line-height:1.65; margin:0 auto 28px; }
+    .insanity-copy strong { color:var(--ink); }
+    .insanity-egg { display:block; margin-top:18px; color:#5f5f66; font-size:.72rem; letter-spacing:.08em; }
+    .insanity-action { width:100%; border:1px solid var(--red); border-radius:17px; background:var(--red); color:#16090b; font-weight:950; padding:17px 18px; cursor:pointer; }
+    .insanity-secondary { width:100%; margin-top:10px; border:1px solid var(--line); border-radius:17px; background:var(--panel); padding:15px; cursor:pointer; font-weight:850; }
+    .insanity-checks { display:grid; gap:10px; margin:0 0 25px; text-align:left; }
+    .insanity-check { display:flex; justify-content:space-between; gap:14px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+    .insanity-check.pass { border-color:rgba(113,229,173,.35); }
+    .insanity-check b { color:var(--red); }
+    .insanity-check.pass b { color:var(--green); }
+    .death-word { margin:26px 0; padding:18px; border:1px solid #53232b; border-radius:18px; background:#160d0f; }
+    .death-written { font-family:"Noto Sans JP",sans-serif; font-size:3.6rem; line-height:1.1; }
+    .death-reading { color:var(--muted); font-family:"Noto Sans JP",sans-serif; margin:7px 0 14px; }
+    .death-detail { color:var(--muted); font-size:.85rem; line-height:1.55; overflow-wrap:anywhere; }
+    .death-detail strong { color:var(--ink); }
+    .insanity-number { display:block; color:var(--ink); font-size:clamp(4.6rem,25vw,9rem); line-height:.85; letter-spacing:-.075em; margin:20px 0 10px; }
+    .insanity-label { color:var(--red); font-size:.76rem; font-weight:950; letter-spacing:.15em; text-transform:uppercase; }
+    .insanity-meta { color:var(--muted); font-size:.82rem; line-height:1.7; margin-top:20px; }
+    .unlock-flash { margin:0 0 14px; padding:13px 15px; border:1px solid var(--red); border-radius:15px; background:rgba(255,83,83,.08); color:#ff9a9a; font-weight:900; animation:unlockPulse .7s ease both; }
+    @keyframes unlockPulse { 0%{transform:scale(.96);opacity:0} 65%{transform:scale(1.015)} 100%{transform:none;opacity:1} }
+    .game.insanity-run .game-head, .game.insanity-run .feedback, .game.insanity-run .hint { display:none; }
+    .game.insanity-run { padding-top:4vh; }
+    form { display:grid; gap:12px; }
+    input { width:100%; border:1px solid var(--line); border-radius:17px; background:var(--panel); color:var(--ink); font-size:1.35rem; text-align:center; padding:17px 18px; outline:none; caret-color:var(--red); }
+    input:focus { border-color:#65656d; box-shadow:0 0 0 4px rgba(255,255,255,.045); }
+    input::placeholder { color:#626268; }
+    .submit { border:0; border-radius:17px; background:var(--ink); color:#101012; font-weight:850; padding:16px 18px; cursor:pointer; }
+    .submit:active { transform:scale(.985); }
+    .choices { display:grid; gap:10px; }
+    .choice { width:100%; min-height:58px; border:1px solid var(--line); border-radius:16px; background:var(--panel); color:var(--ink); cursor:pointer; font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:1.18rem; font-weight:800; transition:.15s ease; }
+    .choice:hover, .choice:focus-visible { border-color:#62626a; outline:none; }
+    .choice:active { transform:scale(.985); }
+    .choice.wrong { border-color:var(--red); color:var(--red); background:rgba(255,83,83,.07); }
+    .choice.correct { border-color:var(--green); color:var(--green); background:rgba(113,229,173,.07); }
+    .choice:disabled { cursor:default; }
+    .form-traits { display:grid; gap:12px; margin:0 0 16px; }
+    .trait-group { display:grid; gap:7px; }
+    .trait-group > span { color:var(--muted); font-size:.76rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+    .trait-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:7px; }
+    .trait-option { min-height:44px; border:1px solid var(--line); border-radius:13px; background:var(--panel); color:var(--ink); font:inherit; font-size:.9rem; font-weight:800; cursor:pointer; }
+    .trait-option.selected { border-color:var(--green); color:var(--green); background:rgba(113,229,173,.08); }
+    .feedback { min-height:28px; margin-top:18px; font-weight:800; }
+    .feedback.ok { color:var(--green); }
+    .feedback.no { color:var(--red); }
+    .hint { margin-top:20px; color:#6f6f76; font-size:.85rem; }
+    .reference { align-self:start; padding-top:18px; }
+    .reference h1 { font-size:clamp(2.2rem, 9vw, 4rem); margin-bottom:10px; }
+    .reference .intro { margin-bottom:22px; }
+    .reference-tools { display:grid; gap:10px; margin:-6px 0 18px; }
+    .reference-search { width:100%; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--ink); padding:13px 15px; font-size:1rem; text-align:left; }
+    .reference-count { color:var(--muted); font-size:.86rem; }
+    .tabs { position:sticky; top:10px; z-index:2; display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:6px; margin-bottom:22px; border:1px solid var(--line); border-radius:16px; background:rgba(20,20,22,.94); backdrop-filter:blur(12px); }
+    .tab { border:0; border-radius:11px; padding:11px 6px; background:transparent; color:var(--muted); cursor:pointer; font-weight:800; font-size:.85rem; }
+    .tab.active { background:var(--ink); color:#101012; }
+    .reference-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+    .reference-card { min-height:96px; padding:13px 8px; border:1px solid var(--line); border-radius:15px; background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .reference-card .char { font-family:"Noto Sans JP", "Yu Gothic", sans-serif; font-size:2rem; line-height:1.1; margin-bottom:7px; }
+    .reference-card .reading { color:var(--green); font-weight:850; font-size:.9rem; overflow-wrap:anywhere; }
+    .reference-card .translation { color:var(--muted); font-size:.76rem; line-height:1.25; margin-top:5px; }
+    .load-more { width:100%; margin-top:14px; border:1px solid var(--line); border-radius:15px; background:var(--panel); padding:14px; cursor:pointer; font-weight:850; }
+    .source-note { color:#66666d; font-size:.75rem; line-height:1.4; margin:18px 2px 0; }
+    @media (min-width:600px) { .modes { grid-template-columns:repeat(2,1fr); } .mode { min-height:136px; grid-template-columns:1fr auto; align-content:center; } .sample { justify-self:end; } }
+    @media (min-width:520px) { .reference-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+    @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">かな<i>。</i></div>
+      <div class="header-actions"><button class="study-link" id="studyLink" type="button">Consultar</button><button class="back" id="back" type="button" hidden>← voltar</button></div>
+    </header>
+    <main>
+      <section class="screen" id="home">
+        <p class="eyebrow">treino de memória</p>
+        <h1>Qual você quer treinar?</h1>
+        <p class="intro">Escolhe um modo e responde. Só isso.</p>
+        <div class="answer-method">
+          <span>Como você quer responder?</span>
+          <div class="method-options" role="group" aria-label="Modo de resposta">
+            <button class="method active" type="button" data-answer-mode="typing" aria-pressed="true">Digitar</button>
+            <button class="method" type="button" data-answer-mode="choices" aria-pressed="false">3 opções</button>
+          </div>
+        </div>
+        <div class="modes">
+          <button class="mode" data-mode="hiragana"><span><strong>Hiragana</strong><small>responda em rōmaji</small></span><span class="sample">あ</span></button>
+          <button class="mode" data-mode="katakana"><span><strong>Katakana</strong><small>responda em hiragana</small></span><span class="sample">ア</span></button>
+          <button class="mode" data-mode="kanji"><span><strong>Kanji</strong><small>responda em hiragana</small></span><span class="sample">日</span></button>
+          <button class="mode" data-mode="vocabulary"><span><strong>Vocabulário</strong><small>associe escrita e conceito</small></span><span class="sample">猿</span></button>
+        </div>
+        <div class="history-block" id="historyBlock" hidden>
+          <button class="last-session" id="lastSession" type="button" aria-expanded="false"><span>Última sessão</span><strong id="lastResult"></strong><span class="history-arrow">⌄</span></button>
+          <div class="last-errors" id="lastErrors" hidden></div>
+        </div>
+        <section class="daily-ranking">
+          <div class="ranking-head"><h2>Seu ranking diário</h2><span>melhor aproveitamento</span></div>
+          <div class="vocab-today" id="vocabToday" hidden></div>
+          <div id="rankingList"></div>
+        </section>
+      </section>
+      <section class="screen levels" id="vocabularyLevels" hidden>
+        <p class="eyebrow">vocabulário</p>
+        <h1>Escolha um nível.</h1>
+        <p class="intro">Palavras novas entram aos poucos. As difíceis voltam mais cedo.</p>
+        <div class="level-list">
+          <button class="level-card" type="button" data-vocab-level="1"><strong>Nível 1 · Vocabulário puro</strong><span>Lemas, leituras e conceitos fundamentais.</span><small id="levelOneProgress">0 de 50 vistas</small></button>
+          <button class="level-card" type="button" data-vocab-level="2"><strong>Nível 2 · Flexão fundamental</strong><span>Casual, negativo e registro polido.</span><small id="levelTwoProgress">0 formas reconhecidas</small></button>
+          <button class="level-card" type="button" data-vocab-level="3"><strong>Nível 3 · Flexão avançada</strong><span>Passado, forma て, potencial, desejo e volitivo.</span><small id="levelThreeProgress">0 formas reconhecidas</small></button>
+          <button class="level-card nerd" type="button" data-vocab-level="4"><strong>Nível 4 · Modo nerd ∞</strong><span>O dicionário japonês–português inteiro. Sem piedade.</span><small id="dictionaryProgress">284.196 verbetes · carregado sob demanda</small></button>
+          <p class="dictionary-source">Dados lexicais: <a href="https://github.com/elementare/jmdict_portuguese" target="_blank" rel="noopener noreferrer">JMdict em português (GPL-3.0)</a>. Cada sessão carrega uma parte diferente para manter o site rápido.</p>
+          <div class="unlock-flash" id="insanityUnlockNotice" hidden>INSANITY DESBLOQUEADO · Boa sorte.</div>
+          <button class="level-card insanity-card" id="insanityCard" type="button">
+            <span class="insanity-badge" id="insanityBadge">🔒 bloqueado</span>
+            <strong>INSANITY</strong><span>O Dark Souls do dicionário japonês.</span>
+            <div class="insanity-requirements">
+              <div class="requirement-line"><span>Conhecidas</span><b id="insanityKnownCard">0 / 200.000</b><div class="requirement-track"><i class="requirement-fill" id="insanityKnownBar"></i></div></div>
+              <div class="requirement-line"><span>Aproveitamento Nerd ∞</span><b id="insanityAccuracyCard">0% / 75%</b><div class="requirement-track"><i class="requirement-fill" id="insanityAccuracyBar"></i></div></div>
+            </div>
+          </button>
+        </div>
+      </section>
+      <section class="screen insanity-screen" id="insanityHub" hidden>
+        <div class="insanity-panel" id="insanityLockedPanel" hidden>
+          <p class="eyebrow">endgame bloqueado</p><h1 class="insanity-title">INSANITY</h1>
+          <div class="insanity-checks">
+            <div class="insanity-check" id="knownCheck"><span>200.000 palavras conhecidas</span><b id="knownCheckValue">✕ 0</b></div>
+            <div class="insanity-check" id="accuracyCheck"><span>75% no Modo nerd ∞</span><b id="accuracyCheckValue">✕ 0%</b></div>
+          </div>
+          <p class="insanity-copy"><strong>Um erro.</strong> Fim da tentativa.</p>
+        </div>
+        <div class="insanity-panel" id="insanityPrepPanel" hidden>
+          <p class="eyebrow">desafio de sobrevivência</p><h1 class="insanity-title">INSANITY</h1>
+          <p class="insanity-copy">Sem checkpoints.<br>Sem segunda chance.<br><strong>Um erro encerra tudo.</strong><span class="insanity-egg">The Dark Souls of Japanese Dictionaries.</span></p>
+          <button class="insanity-action" id="startInsanity" type="button">INICIAR</button>
+          <div class="insanity-meta" id="insanityPrepStats"></div>
+        </div>
+        <div class="insanity-panel" id="insanityResultPanel" hidden>
+          <p class="eyebrow">insanity</p><h1 class="insanity-title" lang="ja">終了。</h1>
+          <strong class="insanity-number" id="insanityResultStreak">0</strong><div class="insanity-label">palavras consecutivas</div>
+          <div class="insanity-meta" id="insanityResultMeta"></div>
+          <div class="death-word"><div class="insanity-label">a palavra que encerrou sua tentativa</div><div class="death-written" id="deathWritten" lang="ja"></div><div class="death-reading" id="deathReading" lang="ja"></div><div class="death-detail" id="deathDetail"></div></div>
+          <button class="insanity-action" id="retryInsanity" type="button">TENTAR NOVAMENTE</button>
+          <span class="insanity-egg">The Dark Souls of Japanese Dictionaries.</span>
+        </div>
+      </section>
+      <section class="screen game" id="game" hidden>
+        <div class="game-head"><div class="mode-name" id="modeName"></div><div class="score"><span class="hits" id="hits">✓ 0</span><span class="misses" id="misses">× 0</span></div></div>
+        <div id="symbolPrompt"><div class="glyph" id="glyph" aria-live="polite"></div><div class="meaning" id="meaning"></div></div>
+        <div class="vocab-prompt" id="vocabPrompt" hidden><div class="vocab-word" id="vocabWord" lang="ja"></div><div class="vocab-reading" id="vocabReading" lang="ja"></div><div class="vocab-question" id="vocabQuestion">O que isso significa?</div></div>
+        <form id="answerForm" autocomplete="off">
+          <label for="answer" id="answerLabel" hidden>Resposta</label>
+          <input id="answer" name="answer" autocapitalize="none" autocomplete="off" spellcheck="false" enterkeyhint="done">
+          <div class="form-traits" id="formTraits" hidden></div>
+          <button class="submit" type="submit">Responder</button>
+        </form>
+        <div class="choices" id="choices" hidden></div>
+        <div class="feedback" id="feedback" aria-live="assertive"></div>
+        <div class="hint" id="gameHint">Enter envia · acerte para avançar</div>
+        <div class="dictionary-attribution" id="dictionaryAttribution" hidden>Fonte: <a href="https://github.com/elementare/jmdict_portuguese" target="_blank" rel="noopener noreferrer">JMdict em português · GPL-3.0</a></div>
+      </section>
+      <section class="screen reference" id="reference" hidden>
+        <p class="eyebrow">material de consulta</p>
+        <h1>Estude no seu ritmo.</h1>
+        <p class="intro">Veja os símbolos e as leituras antes de voltar ao treino.</p>
+        <div class="tabs" role="tablist" aria-label="Tipo de escrita">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-reference="hiragana">Hiragana</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-reference="katakana">Katakana</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-reference="kanji">Kanji</button>
+        </div>
+        <div class="reference-tools" id="referenceTools" hidden>
+          <input class="reference-search" id="referenceSearch" type="search" placeholder="Buscar kanji, leitura ou significado" autocomplete="off">
+          <div class="reference-count" id="referenceCount"></div>
+        </div>
+        <div class="reference-grid" id="referenceGrid"></div>
+        <button class="load-more" id="loadMore" type="button" hidden>Mostrar mais</button>
+        <p class="source-note" id="sourceNote" hidden>Lista oficial Jōyō Kanji. Leituras e significados: KANJIDIC2 / EDRDG.</p>
+      </section>
+    </main>
+  </div>
+  <script src="kanji-data.js?v=31"></script>
+  <script src="vocabulary-data.js?v=31"></script>
+  <script src="verb-core.js?v=34"></script>
+  <script src="supabase-config.js?v=34"></script>
+  <script src="persistence-core.js?v=34"></script>
+  <script src="auth-sync.js?v=34"></script>
+  <script src="platform-core.js?v=34"></script>
+  <script src="endgame-core.js?v=34"></script>
+  <script src="insanity-core.js?v=34"></script>
+  <script src="endgames-ui.js?v=34"></script>
+  <script src="phase3-core.js?v=34"></script>
+  <script src="phase3-ui.js?v=34"></script>
+  <script src="meta-core.js?v=34"></script>
+  <script src="meta-ui.js?v=34"></script>
+  <script src="trial-core.js?v=34"></script>
+  <script src="trial-ui.js?v=34"></script>
+  <script src="account-ui.js?v=34"></script>
+  <script>
+    const repositories=window.KANA_DATA.repositories;
+    const platformFoundation=window.KANA_PLATFORM.bootstrap({storage:repositories.store.storage});
+    const sets = {
+      hiragana: [
+        ['あ','a'],['い','i'],['う','u'],['え','e'],['お','o'],['か','ka'],['き','ki'],['く','ku'],['け','ke'],['こ','ko'],['さ','sa'],['し','shi'],['す','su'],['せ','se'],['そ','so'],['た','ta'],['ち','chi'],['つ','tsu'],['て','te'],['と','to'],['な','na'],['に','ni'],['ぬ','nu'],['ね','ne'],['の','no'],['は','ha'],['ひ','hi'],['ふ','fu'],['へ','he'],['ほ','ho'],['ま','ma'],['み','mi'],['む','mu'],['め','me'],['も','mo'],['や','ya'],['ゆ','yu'],['よ','yo'],['ら','ra'],['り','ri'],['る','ru'],['れ','re'],['ろ','ro'],['わ','wa'],['を',['wo','o']],['ん','n'],['が','ga'],['ぎ','gi'],['ぐ','gu'],['げ','ge'],['ご','go'],['ざ','za'],['じ','ji'],['ず','zu'],['ぜ','ze'],['ぞ','zo'],['だ','da'],['ぢ',['ji','di']],['づ',['zu','du']],['で','de'],['ど','do'],['ば','ba'],['び','bi'],['ぶ','bu'],['べ','be'],['ぼ','bo'],['ぱ','pa'],['ぴ','pi'],['ぷ','pu'],['ぺ','pe'],['ぽ','po']
+      ],
+      katakana: [
+        ['ア','あ'],['イ','い'],['ウ','う'],['エ','え'],['オ','お'],['カ','か'],['キ','き'],['ク','く'],['ケ','け'],['コ','こ'],['サ','さ'],['シ','し'],['ス','す'],['セ','せ'],['ソ','そ'],['タ','た'],['チ','ち'],['ツ','つ'],['テ','て'],['ト','と'],['ナ','な'],['ニ','に'],['ヌ','ぬ'],['ネ','ね'],['ノ','の'],['ハ','は'],['ヒ','ひ'],['フ','ふ'],['ヘ','へ'],['ホ','ほ'],['マ','ま'],['ミ','み'],['ム','む'],['メ','め'],['モ','も'],['ヤ','や'],['ユ','ゆ'],['ヨ','よ'],['ラ','ら'],['リ','り'],['ル','る'],['レ','れ'],['ロ','ろ'],['ワ','わ'],['ヲ','を'],['ン','ん'],['ガ','が'],['ギ','ぎ'],['グ','ぐ'],['ゲ','げ'],['ゴ','ご'],['ザ','ざ'],['ジ','じ'],['ズ','ず'],['ゼ','ぜ'],['ゾ','ぞ'],['ダ','だ'],['ヂ','ぢ'],['ヅ','づ'],['デ','で'],['ド','ど'],['バ','ば'],['ビ','び'],['ブ','ぶ'],['ベ','べ'],['ボ','ぼ'],['パ','ぱ'],['ピ','ぴ'],['プ','ぷ'],['ペ','ぺ'],['ポ','ぽ']
+      ],
+      kanji: window.JOYO_KANJI
+    };
+    const vocabularyPacks=window.KANA_VOCABULARY_PACKS, verbs=window.KANA_VERBS;
+    const labels = { hiragana:'Hiragana · responda em rōmaji', katakana:'Katakana · responda em hiragana', kanji:'Kanji · responda em hiragana', vocabulary:'Vocabulário · responda em português' };
+    const home=document.querySelector('#home'), vocabularyLevels=document.querySelector('#vocabularyLevels'), game=document.querySelector('#game'), reference=document.querySelector('#reference'), studyLink=document.querySelector('#studyLink'), referenceGrid=document.querySelector('#referenceGrid'), referenceTools=document.querySelector('#referenceTools'), referenceSearch=document.querySelector('#referenceSearch'), referenceCount=document.querySelector('#referenceCount'), loadMore=document.querySelector('#loadMore'), sourceNote=document.querySelector('#sourceNote'), back=document.querySelector('#back'), symbolPrompt=document.querySelector('#symbolPrompt'), vocabPrompt=document.querySelector('#vocabPrompt'), vocabWord=document.querySelector('#vocabWord'), vocabReading=document.querySelector('#vocabReading'), vocabQuestion=document.querySelector('#vocabQuestion'), formTraits=document.querySelector('#formTraits'), glyph=document.querySelector('#glyph'), input=document.querySelector('#answer'), answerForm=document.querySelector('#answerForm'), choices=document.querySelector('#choices'), gameHint=document.querySelector('#gameHint'), feedback=document.querySelector('#feedback'), modeName=document.querySelector('#modeName'), meaning=document.querySelector('#meaning'), hitsEl=document.querySelector('#hits'), missesEl=document.querySelector('#misses'), historyBlock=document.querySelector('#historyBlock'), lastSession=document.querySelector('#lastSession'), lastResult=document.querySelector('#lastResult'), lastErrors=document.querySelector('#lastErrors'), vocabToday=document.querySelector('#vocabToday'), rankingList=document.querySelector('#rankingList'), levelOneProgress=document.querySelector('#levelOneProgress'), levelTwoProgress=document.querySelector('#levelTwoProgress'), levelThreeProgress=document.querySelector('#levelThreeProgress'), dictionaryProgress=document.querySelector('#dictionaryProgress'), dictionaryAttribution=document.querySelector('#dictionaryAttribution');
+    let screen='home', mode='', vocabLevel=1, answerMode='typing', current=null, previous='', hits=0, misses=0, wrongAnswers=[], locked=false, referenceType='hiragana', visibleItems=120, sessionTurn=0, vocabProgress=loadVocabProgress(), skillProgress=repositories.mastery.getSkills(), dictionaryLoading=false, activeSessionId=null, activeSessionStartedAt=0, questionStartedAt=0, traitAnswers={};
+    const capabilityDefaults=['past','te_form','potential','desire_tai','volitional'], savedCapabilities=repositories.settings.getGrammarCapabilities(null), grammarCapabilities=verbs.createCapabilities(savedCapabilities?.unlocked||capabilityDefaults);
+    function persistGrammarCapabilities(syncRemote=false){const value={schemaVersion:1,unlocked:grammarCapabilities.list(),updatedAt:new Date().toISOString()};repositories.settings.saveGrammarCapabilities(value);if(syncRemote)window.KANA_CLOUD.sync.enqueueSnapshot('grammar-capabilities',value);}
+    function reloadGrammarCapabilities(){const value=repositories.settings.getGrammarCapabilities(null);if(!value?.unlocked)return;for(const id of grammarCapabilities.list())grammarCapabilities.lock(id);for(const id of value.unlocked)grammarCapabilities.unlock(id);}
+    if(!savedCapabilities)persistGrammarCapabilities();
+    window.KANA_GRAMMAR_CAPABILITIES={canUse:id=>grammarCapabilities.canUse(id),list:()=>grammarCapabilities.list(),unlock:id=>{grammarCapabilities.unlock(id);persistGrammarCapabilities(true);return true;},lock:id=>{const changed=grammarCapabilities.lock(id);persistGrammarCapabilities(true);return changed;}};
+    const dictionaryConfig={shards:29,entries:284196,base:'https://cdn.jsdelivr.net/gh/elementare/jmdict_portuguese@d916dcbcf1ac282b833a8e2a4b5d9a323a4f60ff/'};
+    const insanity=window.KANA_INSANITY;
+    const insanityUI={hub:document.querySelector('#insanityHub'),locked:document.querySelector('#insanityLockedPanel'),prep:document.querySelector('#insanityPrepPanel'),result:document.querySelector('#insanityResultPanel'),card:document.querySelector('#insanityCard'),badge:document.querySelector('#insanityBadge'),knownCard:document.querySelector('#insanityKnownCard'),accuracyCard:document.querySelector('#insanityAccuracyCard'),knownBar:document.querySelector('#insanityKnownBar'),accuracyBar:document.querySelector('#insanityAccuracyBar'),knownCheck:document.querySelector('#knownCheck'),accuracyCheck:document.querySelector('#accuracyCheck'),knownCheckValue:document.querySelector('#knownCheckValue'),accuracyCheckValue:document.querySelector('#accuracyCheckValue'),unlockNotice:document.querySelector('#insanityUnlockNotice'),start:document.querySelector('#startInsanity'),retry:document.querySelector('#retryInsanity'),prepStats:document.querySelector('#insanityPrepStats'),resultStreak:document.querySelector('#insanityResultStreak'),resultMeta:document.querySelector('#insanityResultMeta'),deathWritten:document.querySelector('#deathWritten'),deathReading:document.querySelector('#deathReading'),deathDetail:document.querySelector('#deathDetail')};
+    let nerdKnownBits, nerdLedger=loadNerdLedger(), insanityStats=loadInsanityStats(), insanityRun=loadInsanityRun(), insanityWords=[], insanityLoading=false;
+    function normalize(value){ return value.trim().toLowerCase().normalize('NFKC'); }
+    function normalizeConcept(value){ return normalize(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9ç\s]/g,' ').replace(/\s+/g,' ').trim(); }
+    function loadVocabProgress(){ return repositories.mastery.getVocabulary(); }
+    function saveVocabProgress(){ repositories.mastery.saveVocabulary(vocabProgress); }
+    function skillKey(item,currentMode=mode){return `${currentMode}:${Array.isArray(item)?item[0]:item.id||item.written}`;}
+    function skillStat(item,currentMode=mode){return skillProgress[skillKey(item,currentMode)]||{attempts:0,hits:0,errors:0,streak:0,mastery:0,lastSeen:0};}
+    function updateSkillProgress(item,correct,currentMode=mode){const key=skillKey(item,currentMode),stat={...skillStat(item,currentMode)};stat.attempts++;stat.lastSeen=Date.now();if(correct){stat.hits++;stat.streak++;stat.mastery=Math.min(5,stat.mastery+(stat.streak>=3?.5:.3));}else{stat.errors++;stat.streak=0;stat.mastery=Math.max(0,stat.mastery-.7);}skillProgress[key]=stat;repositories.mastery.saveSkills(skillProgress);return stat;}
+    function wordIndex(id){ const match=/^dict-(\d+)-(\d+)$/.exec(id||''); if(!match) return -1; const index=(Number(match[1])-1)*10000+Number(match[2]); return index>=0&&index<dictionaryConfig.entries?index:-1; }
+    function encodeBits(bits){ let binary=''; for(let start=0;start<bits.length;start+=8192) binary+=String.fromCharCode(...bits.subarray(start,start+8192)); return btoa(binary); }
+    function decodeBits(value){ const bits=new Uint8Array(Math.ceil(dictionaryConfig.entries/8)); if(!value) return bits; try { const binary=atob(value); for(let i=0;i<Math.min(binary.length,bits.length);i++) bits[i]=binary.charCodeAt(i); } catch(_) {} return bits; }
+    function bitKnown(id){ const index=wordIndex(id); return index>=0&&Boolean(nerdKnownBits[index>>3]&(1<<(index&7))); }
+    function setKnownBit(id){ const index=wordIndex(id); if(index<0) return false; const byte=index>>3,mask=1<<(index&7); if(nerdKnownBits[byte]&mask) return false; nerdKnownBits[byte]|=mask; return true; }
+    function loadNerdLedger(){
+      const saved=repositories.mastery.getNerd(); if(saved){ nerdKnownBits=decodeBits(saved.bits); return {hits:Number(saved.hits)||0,errors:Number(saved.errors)||0,known:Number(saved.known)||0}; }
+      nerdKnownBits=new Uint8Array(Math.ceil(dictionaryConfig.entries/8)); let hits=0,errors=0,known=0;
+      Object.entries(vocabProgress||{}).forEach(([id,stat])=>{ if(!id.startsWith('dict-')) return; hits+=Number(stat.hits)||0; errors+=Number(stat.errors)||0; if((Number(stat.mastery)||0)>=insanity.MASTERY_REQUIRED&&setKnownBit(id)) known++; });
+      const ledger={hits,errors,known}; saveNerdLedger(ledger); return ledger;
+    }
+    function saveNerdLedger(value=nerdLedger){ repositories.mastery.saveNerd({...value,bits:encodeBits(nerdKnownBits)}); }
+    function recordNerdLedger(word,correct,before,after){ if(word.level!==4) return; if(correct) nerdLedger.hits++; else nerdLedger.errors++; if(insanity.shouldCountKnown(before.mastery,after.mastery,bitKnown(word.id))&&setKnownBit(word.id)) nerdLedger.known++; saveNerdLedger(); }
+    function nerdMetrics(){ const attempts=nerdLedger.hits+nerdLedger.errors; return {known:nerdLedger.known,hits:nerdLedger.hits,errors:nerdLedger.errors,attempts,accuracy:attempts?nerdLedger.hits/attempts*100:0}; }
+    function loadInsanityStats(){ return repositories.unlocks.getInsanityStats(insanity.emptyStats()); }
+    function saveInsanityStats(){ repositories.unlocks.saveInsanityStats(insanityStats); window.KANA_CLOUD.sync.enqueueSnapshot('insanity-state',{stats:insanityStats,run:null}); }
+    function loadInsanityRun(){ const run=repositories.unlocks.getInsanityRun(); return run?.status==='active'?run:null; }
+    function saveInsanityRun(){ repositories.unlocks.saveInsanityRun(insanityRun); }
+    function accuracy(hitsValue,missesValue){ const total=hitsValue+missesValue; return total?Math.round(hitsValue/total*100):0; }
+    function localDateKey(){ const now=new Date(), pad=value=>String(value).padStart(2,'0'); return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`; }
+    function formatDate(key){ const [year,month,day]=key.split('-'); return key===localDateKey()?'Hoje':`${day}/${month}/${year.slice(2)}`; }
+    function updateScore(){ hitsEl.textContent=`✓ ${hits}`; missesEl.textContent=`× ${misses}`; }
+    function showLastSession(){
+      try {
+        const last=repositories.sessions.getLast(); if(!last) return;
+        const total=(last.hits||0)+(last.misses||0); lastResult.textContent=`${accuracy(last.hits||0,last.misses||0)}% de ${total}`; historyBlock.hidden=false;
+        lastErrors.textContent='';
+        const title=document.createElement('h2'); title.textContent='Erros para revisar'; lastErrors.appendChild(title);
+        if(!last.errors?.length){ const perfect=document.createElement('p'); perfect.className='perfect-session'; perfect.textContent=last.misses?'Os detalhes não foram registrados nessa sessão antiga.':'Nenhum erro nessa sessão. Perfeito.'; lastErrors.appendChild(perfect); return; }
+        last.errors.forEach(error=>{
+          const item=document.createElement('div'); item.className='error-item';
+          const symbol=document.createElement('div'); symbol.className='error-symbol'; symbol.textContent=error.symbol;
+          const info=document.createElement('div'); info.className='error-info';
+          const given=document.createElement('div'); given.className='error-given'; given.textContent=`Você respondeu: ${error.given}`;
+          const correct=document.createElement('div'); correct.className='error-correct'; correct.textContent=`Correto: ${error.correct}`;
+          info.append(given,correct); if(error.meaning){ const detail=document.createElement('div'); detail.textContent=error.meaning; info.appendChild(detail); }
+          item.append(symbol,info); lastErrors.appendChild(item);
+        });
+      } catch(_) {}
+    }
+    function saveSession(){
+      if(!mode || (!hits && !misses)) return;
+      repositories.sessions.saveLast({hits,misses,mode,errors:wrongAnswers});
+      showLastSession();
+    }
+    function recordDaily(correct,word=null,isNew=false){
+      try {
+        const days=repositories.sessions.getDaily(), key=localDateKey();
+        days[key]=days[key]||{hits:0,misses:0}; if(correct) days[key].hits++; else days[key].misses++;
+        if(word){
+          days[key].vocabulary=days[key].vocabulary||{hits:0,misses:0,newWords:{},errors:{}};
+          const vocab=days[key].vocabulary; if(correct) vocab.hits++; else vocab.misses++;
+          if(isNew) vocab.newWords[word.id]=true;
+          if(!correct){ vocab.errors[word.id]=(vocab.errors[word.id]||0)+1; vocab.wordLabels=vocab.wordLabels||{}; vocab.wordLabels[word.id]=word.written; }
+        }
+        repositories.sessions.saveDaily(days); renderRanking();
+      } catch(_) {}
+    }
+    function renderRanking(){
+      rankingList.textContent='';
+      try {
+        const days=repositories.sessions.getDaily();
+        const today=days[localDateKey()]?.vocabulary;
+        if(today){
+          const total=(today.hits||0)+(today.misses||0), difficult=Object.entries(today.errors||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>today.wordLabels?.[id]||vocabularyPacks[1].words.find(word=>word.id===id)?.written).filter(Boolean);
+          vocabToday.hidden=false; vocabToday.textContent='';
+          const result=document.createElement('strong'); result.textContent=`Vocabulário hoje · ${accuracy(today.hits||0,today.misses||0)}% de ${total}`;
+          const details=document.createElement('span'); details.textContent=`${Object.keys(today.newWords||{}).length} palavras novas${difficult.length?` · Mais difíceis: ${difficult.join(' · ')}`:''}`;
+          vocabToday.append(result,details);
+        } else { vocabToday.hidden=true; }
+        const rows=Object.entries(days).map(([date,stats])=>({date,hits:stats.hits||0,misses:stats.misses||0,total:(stats.hits||0)+(stats.misses||0),rate:accuracy(stats.hits||0,stats.misses||0)})).filter(row=>row.total).sort((a,b)=>b.rate-a.rate||b.total-a.total||b.date.localeCompare(a.date)).slice(0,10);
+        if(!rows.length){ const empty=document.createElement('p'); empty.className='empty-ranking'; empty.textContent='Jogue uma sessão para entrar no ranking.'; rankingList.appendChild(empty); return; }
+        rows.forEach((row,index)=>{
+          const line=document.createElement('div'); line.className='rank-row';
+          const position=document.createElement('span'); position.className='rank-position'; position.textContent=`${index+1}º`;
+          const date=document.createElement('span'); date.className=`rank-date ${row.date===localDateKey()?'today':''}`; date.textContent=formatDate(row.date);
+          const score=document.createElement('span'); score.className='rank-score'; score.textContent=`${row.rate}%`;
+          const total=document.createElement('small'); total.textContent=`${row.total} tentativas`; score.appendChild(total);
+          line.append(position,date,score); rankingList.appendChild(line);
+        });
+      } catch(_) {}
+    }
+    function recordWrong(given){
+      if(mode==='vocabulary'){
+        wrongAnswers.push({symbol:current.written,given,correct:current.grammar&&vocabLevel>1?verbs.describe(current):current.meanings.join(' · '),meaning:current.reading});
+      } else {
+        const answers=Array.isArray(current[1])?current[1]:[current[1]];
+        wrongAnswers.push({symbol:current[0],given,correct:answers.join(' · '),meaning:mode==='kanji'?current[2]:''});
+      }
+    }
+    function vocabStat(word){ return vocabProgress[word.id]||{attempts:0,hits:0,errors:0,streak:0,mastery:0,lastSeen:0,lastResult:'new'}; }
+    function updateVocabProgress(word,correct){
+      const before={...vocabStat(word)},stat={...before},now=Date.now(); stat.attempts++; stat.lastSeen=now; stat.lastTurn=sessionTurn; stat.lastResult=correct?'correct':'wrong';
+      if(correct){ stat.hits++; stat.streak++; stat.mastery=Math.min(5,stat.mastery+(stat.streak>=2?1:.5)); }
+      else { stat.errors++; stat.streak=0; stat.mastery=Math.max(0,stat.mastery-1.5); }
+      const dimension=word.grammar&&vocabLevel>1?'grammaticalUsage':'visualMeaning';stat.masteryV2=window.KANA_PLATFORM.recordMasteryEvidence(stat.masteryV2||window.KANA_PLATFORM.projectLegacyVocabulary(before),{dimension,correct,at:now,sessionId:activeSessionId,facet:word.verbForm||null});
+      if(word.verbForm&&vocabLevel>1){const forms={...(stat.forms||{})},form={attempts:0,hits:0,errors:0,streak:0,...(forms[word.verbForm]||{})};form.attempts++;form.lastSeen=now;form.lastResult=correct?'correct':'wrong';if(correct){form.hits++;form.streak++;}else{form.errors++;form.streak=0;}forms[word.verbForm]=form;stat.forms=forms;}
+      vocabProgress[word.id]=stat; recordNerdLedger(word,correct,before,stat); saveVocabProgress(); updateLevelProgress();
+    }
+    function chooseVocabularyWord(){
+      const words=vocabularyPacks[vocabLevel].words, unseen=words.filter(word=>!vocabStat(word).attempts);
+      if(unseen.length&&Math.random()<.28){const word=unseen[Math.floor(Math.random()*unseen.length)];return vocabLevel<4&&word.verb?verbs.chooseForm(word,vocabLevel,grammarCapabilities,Math.random,vocabStat(word).forms):word;}
+      const weighted=words.map(word=>{
+        const stat=vocabStat(word), errorRate=stat.attempts?stat.errors/stat.attempts:0;
+        let weight=stat.attempts?1+errorRate*7+(stat.lastResult==='wrong'?5:0)+(5-stat.mastery)*.45:4;
+        const age=stat.lastSeen?Date.now()-stat.lastSeen:Infinity;if(age>7*86400000)weight*=2;else if(age>86400000)weight*=1.45;
+        if(vocabLevel>1&&word.curriculumLevel===vocabLevel)weight*=2.8;else if(vocabLevel===3&&word.curriculumLevel===2)weight*=1.45;
+        if(window.KANA_META?.isCursed('vocabulary',word.id))weight*=2.2;
+        if(stat.mastery>=4) weight*=.35;
+        if(word.id===previous) weight*=.05;
+        if(sessionTurn-(stat.lastTurn||-20)<3&&stat.lastResult!=='wrong') weight*=.25;
+        return {word,weight:Math.max(.12,weight)};
+      });
+      let roll=Math.random()*weighted.reduce((sum,item)=>sum+item.weight,0);
+      let selected=weighted.at(-1).word;for(const item of weighted){ roll-=item.weight; if(roll<=0){selected=item.word;break;} }
+      return vocabLevel<4&&selected.verb?verbs.chooseForm(selected,vocabLevel,grammarCapabilities,Math.random,vocabStat(selected).forms):selected;
+    }
+    function updateLevelProgress(){
+      const words=vocabularyPacks[1].words, seen=words.filter(word=>vocabStat(word).attempts).length; levelOneProgress.textContent=`${seen} de ${words.length} vistas`;
+      const formCount=depth=>Object.values(vocabProgress).reduce((total,stat)=>total+Object.entries(stat.forms||{}).filter(([id,value])=>verbs.FORMS[id]?.depth===depth&&value.attempts).length,0);levelTwoProgress.textContent=`${formCount(2)} formas fundamentais reconhecidas`;levelThreeProgress.textContent=`${formCount(3)} formas avançadas reconhecidas`;
+      const dictionarySeen=Object.keys(vocabProgress).filter(id=>id.startsWith('dict-')&&vocabProgress[id].attempts).length; dictionaryProgress.textContent=dictionarySeen?`${dictionarySeen.toLocaleString('pt-BR')} de ${dictionaryConfig.entries.toLocaleString('pt-BR')} encontrados`:`${dictionaryConfig.entries.toLocaleString('pt-BR')} verbetes · carregado sob demanda`;
+      refreshInsanityAccess();
+    }
+    function cleanDictionaryMeaning(value){
+      const text=String(value??'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();
+      return text.replace(/^\d+[.)]\s*/,'').trim();
+    }
+    function dictionaryMeanings(glossary){
+      const raw=Array.isArray(glossary)?glossary:[glossary], values=[];
+      raw.forEach(item=>{
+        const cleaned=cleanDictionaryMeaning(typeof item==='string'?item:item?.content||item?.text||'');
+        if(!cleaned) return;
+        const parts=cleaned.split(/\s*[;/]\s*/).map(part=>part.trim()).filter(part=>part.length>0&&part.length<=90);
+        (parts.length?parts:[cleaned]).forEach(part=>{ if(part.length<=120&&!values.includes(part)) values.push(part); });
+      });
+      return values.slice(0,8);
+    }
+    function parseDictionaryShard(rows,shard){
+      return rows.map((entry,index)=>{
+        if(!Array.isArray(entry)) return null;
+        const written=String(entry[0]||entry[1]||'').trim(), reading=String(entry[1]||entry[0]||'').trim(), meanings=dictionaryMeanings(entry[5]);
+        if(!written||!reading||!meanings.length) return null;
+        const tags=String(entry[2]||entry[3]||'').trim().split(/\s+/).filter(Boolean);
+        const item={id:`dict-${shard}-${index}`,written,reading,meanings,category:tags[0]||'dictionary',level:4,audio:null};
+        item.contentRef=window.KANA_PERSISTENCE.contentIdentity(item,'jmdict-pt'); return item;
+      }).filter(Boolean);
+    }
+    async function startDictionaryLevel(button){
+      if(dictionaryLoading) return;
+      dictionaryLoading=true; const original=button.querySelector('small').textContent; button.disabled=true; button.querySelector('small').textContent='abrindo o dicionário…';
+      try {
+        const previousShard=repositories.settings.getDictionaryShard()||Math.floor(Math.random()*dictionaryConfig.shards);
+        const shard=previousShard%dictionaryConfig.shards+1;
+        const response=await fetch(`${dictionaryConfig.base}term_bank_${shard}.json`); if(!response.ok) throw new Error('dictionary unavailable');
+        const words=parseDictionaryShard(await response.json(),shard); if(words.length<3) throw new Error('dictionary empty');
+        vocabularyPacks[4]={id:4,title:'Modo nerd',description:'Dicionário japonês–português',words}; repositories.settings.saveDictionaryShard(shard);
+        start('vocabulary',4);
+      } catch(_) {
+        button.querySelector('small').textContent='não foi possível carregar · toque para tentar novamente';
+      } finally {
+        dictionaryLoading=false; button.disabled=false; if(screen==='game') button.querySelector('small').textContent=original;
+      }
+    }
+    function refreshInsanityAccess(){
+      const state=insanity.unlockFromMetrics(nerdMetrics(),Boolean(insanityStats.unlockedAt));
+      if(state.justUnlocked){ insanityStats.unlockedAt=Date.now(); saveInsanityStats(); insanityUI.unlockNotice.hidden=false; }
+      const known=Math.min(state.metrics.known,insanity.KNOWN_REQUIRED), rate=state.metrics.accuracy;
+      insanityUI.knownCard.textContent=`${state.metrics.known.toLocaleString('pt-BR')} / ${insanity.KNOWN_REQUIRED.toLocaleString('pt-BR')}`;
+      insanityUI.accuracyCard.textContent=`${rate.toLocaleString('pt-BR',{maximumFractionDigits:2})}% / ${insanity.ACCURACY_REQUIRED}%`;
+      insanityUI.knownBar.style.width=`${known/insanity.KNOWN_REQUIRED*100}%`; insanityUI.accuracyBar.style.width=`${Math.min(100,rate/insanity.ACCURACY_REQUIRED*100)}%`;
+      insanityUI.card.classList.toggle('unlocked',state.unlocked); insanityUI.badge.textContent=state.unlocked?'desbloqueado · entre se tiver coragem':'🔒 bloqueado';
+      return state;
+    }
+    function showInsanityPanel(name){
+      screen='insanity'; home.hidden=true; vocabularyLevels.hidden=true; reference.hidden=true; game.hidden=true; insanityUI.hub.hidden=false; studyLink.hidden=true; back.hidden=false;
+      insanityUI.locked.hidden=name!=='locked'; insanityUI.prep.hidden=name!=='prep'; insanityUI.result.hidden=name!=='result'; window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function openInsanity(){
+      const state=refreshInsanityAccess();
+      if(!state.unlocked){
+        insanityUI.knownCheck.classList.toggle('pass',state.metrics.known>=insanity.KNOWN_REQUIRED); insanityUI.accuracyCheck.classList.toggle('pass',state.metrics.accuracy>=insanity.ACCURACY_REQUIRED);
+        insanityUI.knownCheckValue.textContent=`${state.metrics.known>=insanity.KNOWN_REQUIRED?'✓':'✕'} ${state.metrics.known.toLocaleString('pt-BR')}`;
+        insanityUI.accuracyCheckValue.textContent=`${state.metrics.accuracy>=insanity.ACCURACY_REQUIRED?'✓':'✕'} ${state.metrics.accuracy.toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
+        showInsanityPanel('locked'); return;
+      }
+      insanityUI.start.textContent=insanityRun?'CONTINUAR RUN':'INICIAR';
+      insanityUI.prepStats.textContent=`Recorde: ${(insanityStats.best||0).toLocaleString('pt-BR')} · ${insanityStats.attempts||0} tentativas`;
+      showInsanityPanel('prep');
+    }
+    function indexKnown(index){ return Boolean(nerdKnownBits[index>>3]&(1<<(index&7))); }
+    function chooseKnownShard(except=0){
+      const options=[];
+      for(let shard=1;shard<=dictionaryConfig.shards;shard++){
+        let count=0,start=(shard-1)*10000,end=Math.min(start+10000,dictionaryConfig.entries);
+        for(let index=start;index<end;index++) if(indexKnown(index)) count++;
+        if(count&&shard!==except) options.push({shard,count});
+      }
+      if(!options.length&&except) return except;
+      let roll=Math.random()*options.reduce((sum,item)=>sum+item.count,0);
+      for(const item of options){ roll-=item.count; if(roll<=0) return item.shard; }
+      return options.at(-1)?.shard||1;
+    }
+    async function loadInsanityShard(shard){
+      const response=await fetch(`${dictionaryConfig.base}term_bank_${shard}.json`); if(!response.ok) throw new Error('dictionary unavailable');
+      insanityWords=parseDictionaryShard(await response.json(),shard).filter(word=>bitKnown(word.id));
+      if(insanityWords.length<3) throw new Error('known words unavailable');
+    }
+    function pickInsanityWord(){
+      const recent=new Set(insanityRun.recentIds||[]), available=insanityWords.filter(word=>word.id!==insanityRun.current?.id&&!recent.has(word.id));
+      const pool=available.length?available:insanityWords;
+      const weighted=pool.map(word=>{ const stat=vocabStat(word), errorRate=stat.attempts?stat.errors/stat.attempts:0; return {word,weight:1+errorRate*5+(stat.lastResult==='wrong'?2:0)}; });
+      let roll=Math.random()*weighted.reduce((sum,item)=>sum+item.weight,0);
+      for(const item of weighted){ roll-=item.weight; if(roll<=0) return item.word; }
+      return weighted.at(-1).word;
+    }
+    function buildInsanityChoices(){
+      const accepted=insanityRun.current.meanings,correct=accepted[0],family=insanityRun.current.category.split('-')[0];
+      const candidates=[...insanityWords.filter(word=>word.id!==insanityRun.current.id&&word.category===insanityRun.current.category),...insanityWords.filter(word=>word.id!==insanityRun.current.id&&word.category.split('-')[0]===family),...insanityWords].map(word=>word.meanings[0]).filter(value=>!accepted.includes(value));
+      const distractors=[]; for(const value of shuffle(candidates)){ if(!distractors.includes(value)){ distractors.push(value); if(distractors.length===2) break; } }
+      choices.textContent=''; shuffle([correct,...distractors]).forEach(value=>{ const button=document.createElement('button'); button.type='button'; button.className='choice'; button.textContent=value; button.addEventListener('click',()=>submitInsanityAnswer(value)); choices.appendChild(button); });
+    }
+    function renderInsanityQuestion(){
+      current=insanityRun.current; vocabWord.textContent=current.written; const hasKanji=/[\u3400-\u9fff\uf900-\ufaff]/.test(current.written); vocabReading.textContent=hasKanji?current.reading:'';
+      input.value=''; answerForm.hidden=insanityRun.answerMode!=='typing'; choices.hidden=insanityRun.answerMode!=='choices';
+      if(insanityRun.answerMode==='choices') buildInsanityChoices(); else setTimeout(()=>input.focus(),0);
+    }
+    function showInsanityGame(){
+      screen='insanity-run'; insanityUI.hub.hidden=true; vocabularyLevels.hidden=true; home.hidden=true; reference.hidden=true; game.hidden=false; game.classList.add('insanity-run'); symbolPrompt.hidden=true; vocabPrompt.hidden=false; dictionaryAttribution.hidden=false; studyLink.hidden=true; back.hidden=false; renderInsanityQuestion();
+    }
+    async function prepareInsanityQuestion(rotate=false){
+      if(rotate||!insanityWords.length){ insanityRun.shard=chooseKnownShard(rotate?insanityRun.shard:0); saveInsanityRun(); await loadInsanityShard(insanityRun.shard); }
+      insanityRun.current=pickInsanityWord(); saveInsanityRun();
+    }
+    async function beginInsanity(){
+      if(insanityLoading) return; insanityLoading=true; const buttons=[insanityUI.start,insanityUI.retry]; buttons.forEach(button=>button.disabled=true);
+      try {
+        if(!insanityRun){ insanityRun={status:'active',startedAt:Date.now(),streak:0,shard:chooseKnownShard(),recentIds:[],current:null,answerMode}; saveInsanityRun(); }
+        await loadInsanityShard(insanityRun.shard); if(!insanityRun.current) await prepareInsanityQuestion(false); showInsanityGame();
+      } catch(_) { insanityUI.prepStats.textContent='Não foi possível carregar o dicionário. Toque para tentar novamente.'; showInsanityPanel('prep'); }
+      finally { insanityLoading=false; buttons.forEach(button=>button.disabled=false); }
+    }
+    function formatDuration(ms){ const seconds=Math.floor(ms/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60); return hours?`${hours}h ${minutes%60}min ${seconds%60}s`:minutes?`${minutes}min ${seconds%60}s`:`${seconds}s`; }
+    function finishInsanity(given){
+      if(!insanityRun) return;
+      const defeat={written:insanityRun.current.written,reading:insanityRun.current.reading,given,correct:insanityRun.current.meanings};
+      window.dispatchEvent(new CustomEvent('kana:run-ended',{detail:{mode:'insanity',itemId:insanityRun.current.id,display:defeat.written,reading:defeat.reading,runLength:insanityRun.streak,answer:given,at:Date.now()}}));
+      const finished=insanity.finishRun(insanityStats,insanityRun,defeat,Date.now()); insanityStats=finished.stats; saveInsanityStats(); insanityRun=null; saveInsanityRun(); insanityWords=[];
+      const result=finished.result,average=result.streak?result.durationMs/result.streak:0; insanityUI.resultStreak.textContent=result.streak.toLocaleString('pt-BR');
+      insanityUI.resultMeta.textContent=`Duração: ${formatDuration(result.durationMs)} · Recorde: ${insanityStats.best.toLocaleString('pt-BR')} · ${new Date(result.endedAt).toLocaleString('pt-BR')}${average?` · Média: ${(average/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})}s`:''}`;
+      insanityUI.deathWritten.textContent=defeat.written; insanityUI.deathReading.textContent=defeat.reading; insanityUI.deathDetail.textContent='';
+      const givenLine=document.createElement('div'),correctLine=document.createElement('div'); givenLine.textContent=`Você respondeu: ${given||'—'}`; correctLine.textContent=`Correto: ${defeat.correct.join(' · ')}`; insanityUI.deathDetail.append(givenLine,correctLine);
+      game.hidden=true; game.classList.remove('insanity-run'); showInsanityPanel('result');
+    }
+    async function submitInsanityAnswer(raw){
+      if(locked||!insanityRun) return; locked=true;
+      if(!insanity.acceptsAnswer(raw,insanityRun.current.meanings,normalizeConcept)){ finishInsanity(raw); locked=false; return; }
+      insanityRun.streak++; insanityRun.recentIds=[...(insanityRun.recentIds||[]),insanityRun.current.id].slice(-200); insanityRun.current=null; saveInsanityRun();
+      try { await prepareInsanityQuestion(insanityRun.streak%250===0); renderInsanityQuestion(); } catch(_) { insanityUI.prepStats.textContent='A run foi salva. Não foi possível carregar o próximo bloco agora.'; showInsanityPanel('prep'); }
+      locked=false;
+    }
+    function getAccepted(){ return mode==='vocabulary'?current.meanings:(Array.isArray(current[1])?current[1]:[current[1]]); }
+    function needsGrammarAnswer(){return mode==='vocabulary'&&vocabLevel>1&&Boolean(current?.grammar);}
+    function renderFormTraits(){
+      formTraits.textContent='';traitAnswers={};const groups=needsGrammarAnswer()&&answerMode==='typing'?verbs.traitGroups(current):[];formTraits.hidden=!groups.length;
+      groups.forEach(group=>{const wrapper=document.createElement('div');wrapper.className='trait-group';const label=document.createElement('span');label.textContent=group.label;const options=document.createElement('div');options.className='trait-options';group.options.forEach(option=>{const button=document.createElement('button');button.type='button';button.className='trait-option';button.textContent=option.label;button.dataset.value=option.value;button.addEventListener('click',()=>{traitAnswers[group.key]=option.value;options.querySelectorAll('button').forEach(item=>item.classList.toggle('selected',item===button));});options.appendChild(button);});wrapper.append(label,options);formTraits.appendChild(wrapper);});
+    }
+    function grammarChoiceOptions(){
+      const correct=verbs.describe(current),groups=verbs.traitGroups(current),alternatives=[];
+      for(const group of groups){for(const option of group.options){if(option.value===group.correct)continue;const labels=groups.map(item=>verbs.TRAIT_LABELS[item.key][item.key===group.key?option.value:item.correct]);alternatives.push([current.meanings[0],...labels].join(' · '));}}
+      const words=vocabularyPacks[vocabLevel].words.filter(word=>word.id!==current.id&&word.category.split('-')[0]===current.category.split('-')[0]);for(const word of words)alternatives.push(correct.replace(current.meanings[0],word.meanings[0]));
+      return{correct,distractors:shuffle([...new Set(alternatives)]).slice(0,2)};
+    }
+    function registerAttempt(correct,given){
+      const isNew=mode==='vocabulary'&&!vocabStat(current).attempts;
+      if(correct) hits++; else { misses++; recordWrong(given); }
+      updateScore(); recordDaily(correct,mode==='vocabulary'?current:null,isNew);
+      const attemptStat=mode==='vocabulary'?(updateVocabProgress(current,correct),vocabStat(current)):updateSkillProgress(current,correct);
+      saveSession();
+      window.KANA_CLOUD.sync.enqueueAttempt({sessionId:activeSessionId,item:current,mode,correct,responseMs:Math.max(0,Date.now()-questionStartedAt),stat:attemptStat,meta:{requiresPortuguese:!['hiragana','katakana'].includes(mode)}});
+      queueCurrentSession(false);
+    }
+    function shuffle(items){
+      const copy=[...items];
+      for(let i=copy.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [copy[i],copy[j]]=[copy[j],copy[i]]; }
+      return copy;
+    }
+    function vowelOf(value){
+      const last=normalize(value).slice(-1);
+      const groups={a:'あかがさざただなはばぱまゃやらわ',i:'いきぎしじちぢにひびぴみり',u:'うくぐすずつづぬふぶぷむゅゆる',e:'えけげせぜてでねへべぺめれ',o:'おこごそぞとどのほぼぽもょよろを'};
+      if(/[aeiou]$/.test(last)) return last;
+      return Object.keys(groups).find(key=>groups[key].includes(last))||last;
+    }
+    function buildChoices(){
+      if(needsGrammarAnswer()){const optionSet=grammarChoiceOptions();choices.textContent='';shuffle([optionSet.correct,...optionSet.distractors]).forEach(value=>{const button=document.createElement('button');button.type='button';button.className='choice';button.textContent=value;button.addEventListener('click',()=>submitChoice(value,button));choices.appendChild(button);});return;}
+      const accepted=getAccepted(), correct=accepted[0], targetVowel=vowelOf(correct);
+      let candidates;
+      if(mode==='vocabulary'){
+        const words=vocabularyPacks[vocabLevel].words.filter(word=>word.id!==current.id);
+        const categoryFamily=current.category.split('-')[0];
+        candidates=[...words.filter(word=>word.category===current.category),...words.filter(word=>word.category.split('-')[0]===categoryFamily),...words].map(word=>word.meanings[0]).filter(value=>!accepted.includes(value));
+      } else {
+        candidates=sets[mode].flatMap(item=>Array.isArray(item[1])?item[1]:[item[1]]).filter(value=>!accepted.includes(value));
+      }
+      if(mode==='kanji'){
+        const close=candidates.filter(value=>value.length===correct.length&&value.slice(-1)===correct.slice(-1));
+        const similar=candidates.filter(value=>value.length===correct.length);
+        candidates=[...close,...similar,...candidates];
+      } else if(mode!=='vocabulary') {
+        candidates=[...candidates.filter(value=>vowelOf(value)===targetVowel),...candidates];
+      }
+      const distractors=[];
+      for(const value of shuffle(candidates)){ if(!distractors.includes(value)){ distractors.push(value); if(distractors.length===2) break; } }
+      choices.textContent='';
+      shuffle([correct,...distractors]).forEach(value=>{ const button=document.createElement('button'); button.type='button'; button.className='choice'; button.textContent=value; button.addEventListener('click',()=>submitChoice(value,button)); choices.appendChild(button); });
+    }
+    function submitChoice(value,button){
+      if(locked||button.disabled) return;
+      const accepted=needsGrammarAnswer()?[verbs.describe(current)]:getAccepted();
+      if(accepted.includes(value)){
+        locked=true; registerAttempt(true,value); feedback.textContent='Correto'; feedback.className='feedback ok';
+        choices.querySelectorAll('button').forEach(option=>{ option.disabled=true; if(accepted.includes(option.textContent)) option.classList.add('correct'); });
+        setTimeout(next,520);
+      } else {
+        registerAttempt(false,value); button.disabled=true; button.classList.add('wrong'); feedback.textContent='Tenta outra'; feedback.className='feedback no';
+      }
+    }
+    function next(){
+      sessionTurn++; locked=false; input.value=''; feedback.textContent=''; feedback.className='feedback';
+      if(mode==='vocabulary'){
+        current=chooseVocabularyWord(); previous=current.id; symbolPrompt.hidden=true; vocabPrompt.hidden=false; vocabWord.textContent=current.written;
+        const hasKanji=/[\u3400-\u9fff\uf900-\ufaff]/.test(current.written); vocabReading.textContent=hasKanji?current.reading:'';
+        vocabQuestion.textContent=needsGrammarAnswer()?'Reconheça o verbo e a forma.':'O que isso significa?';
+      } else {
+        const pool=sets[mode]; let choice=window.KANA_META?.prioritize(pool,mode,previous); if(!choice)do { choice=pool[Math.floor(Math.random()*pool.length)]; } while(pool.length>1&&choice[0]===previous);
+        current=choice; previous=choice[0]; symbolPrompt.hidden=false; vocabPrompt.hidden=true; glyph.textContent=current[0]; meaning.textContent=mode==='kanji'?current[2]:'';
+      }
+      answerForm.hidden=answerMode!=='typing'; choices.hidden=answerMode!=='choices'; renderFormTraits();gameHint.textContent=answerMode==='typing'?(needsGrammarAnswer()?'Digite o conceito, marque as propriedades e envie':'Enter envia · acerte para avançar'):'Escolha uma resposta · acerte para avançar';
+      questionStartedAt=Date.now();
+      if(answerMode==='choices') buildChoices(); else input.focus();
+    }
+    function start(selected,level=1){ mode=selected; vocabLevel=level; screen='game'; sessionTurn=0; previous=''; hits=0; misses=0; wrongAnswers=[]; activeSessionId=window.KANA_PERSISTENCE.uuid(); activeSessionStartedAt=Date.now(); updateScore(); home.hidden=true; vocabularyLevels.hidden=true; game.hidden=false; studyLink.hidden=true; back.hidden=false; dictionaryAttribution.hidden=!(selected==='vocabulary'&&level===4); modeName.textContent=level===4?'Vocabulário · Modo nerd ∞':selected==='vocabulary'?`Vocabulário · Nível ${level}`:labels[mode]; input.placeholder=mode==='hiragana'?'ex.: ka':mode==='vocabulary'?'ex.: macaco':'ex.: か'; next(); }
+    function queueCurrentSession(finish=true){ if(!activeSessionId||(!hits&&!misses)) return; window.KANA_CLOUD.sync.enqueueSession({id:activeSessionId,deviceId:repositories.store.read(window.KANA_PERSISTENCE.STATE_KEY,{identity:{guestId:'device'}}).identity.guestId,mode,territory:mode,startedAt:new Date(activeSessionStartedAt).toISOString(),endedAt:finish?new Date().toISOString():null,status:finish?'completed':'active',summary:{hits,errors:misses,attempts:hits+misses,dateKey:localDateKey(),wrongAnswers}}); if(finish) activeSessionId=null; }
+    function openVocabularyLevels(){ screen='levels'; home.hidden=true; insanityUI.hub.hidden=true; vocabularyLevels.hidden=false; studyLink.hidden=true; back.hidden=false; updateLevelProgress(); }
+    function renderReference(){
+      const query=normalize(referenceSearch.value);
+      const all=sets[referenceType];
+      const filtered=query?all.filter(item=>normalize([item[0],...(Array.isArray(item[1])?item[1]:[item[1]]),item[2]||''].join(' ')).includes(query)):all;
+      const shown=referenceType==='kanji'?filtered.slice(0,visibleItems):filtered;
+      referenceGrid.textContent='';
+      shown.forEach(item=>{
+        const card=document.createElement('div'); card.className='reference-card';
+        const answers=Array.isArray(item[1])?item[1].join(' · '):item[1];
+        card.innerHTML=`<div class="char">${item[0]}</div><div class="reading">${answers}</div>${referenceType==='kanji'?`<div class="translation">${item[2]}</div>`:''}`;
+        referenceGrid.appendChild(card);
+      });
+      referenceCount.textContent=referenceType==='kanji'?`${filtered.length} de 2.136 kanjis`:'';
+      loadMore.hidden=referenceType!=='kanji'||shown.length>=filtered.length;
+    }
+    function showReference(type='hiragana'){
+      screen='reference'; referenceType=type; visibleItems=120; referenceSearch.value='';
+      home.hidden=true; vocabularyLevels.hidden=true; insanityUI.hub.hidden=true; game.hidden=true; reference.hidden=false; studyLink.hidden=true; back.hidden=false; back.textContent='← voltar';
+      document.querySelectorAll('.tab').forEach(tab=>{ const active=tab.dataset.reference===type; tab.classList.toggle('active',active); tab.setAttribute('aria-selected',active); });
+      referenceTools.hidden=type!=='kanji'; sourceNote.hidden=type!=='kanji'; renderReference();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    document.querySelectorAll('.mode[data-mode]').forEach(button=>button.addEventListener('click',()=>button.dataset.mode==='vocabulary'?openVocabularyLevels():window.KANA_ENDGAMES.openTerritory(button.dataset.mode,()=>start(button.dataset.mode))));
+    document.querySelectorAll('[data-vocab-level]').forEach(button=>button.addEventListener('click',()=>Number(button.dataset.vocabLevel)===4?startDictionaryLevel(button):start('vocabulary',Number(button.dataset.vocabLevel))));
+    insanityUI.card.addEventListener('click',openInsanity); insanityUI.start.addEventListener('click',beginInsanity); insanityUI.retry.addEventListener('click',beginInsanity);
+    document.querySelectorAll('.method').forEach(button=>button.addEventListener('click',()=>{ answerMode=button.dataset.answerMode; document.querySelectorAll('.method').forEach(option=>{ const active=option===button; option.classList.toggle('active',active); option.setAttribute('aria-pressed',active); }); }));
+    studyLink.addEventListener('click',()=>showReference());
+    document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>showReference(tab.dataset.reference)));
+    referenceSearch.addEventListener('input',()=>{ visibleItems=120; renderReference(); });
+    loadMore.addEventListener('click',()=>{ visibleItems+=120; renderReference(); });
+    document.querySelector('#answerForm').addEventListener('submit',(event)=>{
+      event.preventDefault(); const raw=input.value.trim(); if(!raw || locked) return;
+      if(screen==='insanity-run'){ submitInsanityAnswer(raw); return; }
+      const clean=mode==='vocabulary'?normalizeConcept(raw):normalize(raw), accepted=getAccepted().map(value=>mode==='vocabulary'?normalizeConcept(value):normalize(value));
+      if(needsGrammarAnswer()){
+        const groups=verbs.traitGroups(current);if(groups.some(group=>!traitAnswers[group.key])){feedback.textContent='Marque todas as propriedades da forma';feedback.className='feedback no';return;}
+        const traitsCorrect=verbs.checkTraits(current,traitAnswers).correct,given=[raw,...groups.map(group=>verbs.TRAIT_LABELS[group.key][traitAnswers[group.key]])].join(' · ');
+        if(accepted.includes(clean)&&traitsCorrect){locked=true;registerAttempt(true,given);feedback.textContent='Correto';feedback.className='feedback ok';setTimeout(next,420);}
+        else{registerAttempt(false,given);feedback.textContent=accepted.includes(clean)?'Revise as propriedades da forma':'Tenta de novo';feedback.className='feedback no';input.select();}
+      }else if(accepted.includes(clean)){ locked=true; registerAttempt(true,raw); feedback.textContent='Correto'; feedback.className='feedback ok'; setTimeout(next,420); }
+      else { registerAttempt(false,raw); feedback.textContent='Tenta de novo'; feedback.className='feedback no'; input.select(); }
+    });
+    lastSession.addEventListener('click',()=>{ const opening=lastErrors.hidden; lastErrors.hidden=!opening; lastSession.setAttribute('aria-expanded',opening); });
+    back.addEventListener('click',()=>{
+      if(window.KANA_ENDGAMES.handleBack()) return;
+      if(screen==='game'){ saveSession(); queueCurrentSession(); }
+      screen='home'; game.hidden=true; game.classList.remove('insanity-run'); reference.hidden=true; vocabularyLevels.hidden=true; insanityUI.hub.hidden=true; home.hidden=false; studyLink.hidden=false; back.hidden=true; back.textContent='← voltar'; dictionaryAttribution.hidden=true; input.blur(); feedback.textContent=''; mode=''; renderRanking(); window.scrollTo({top:0,behavior:'smooth'});
+    });
+    addEventListener('pagehide',()=>{ if(screen==='game') queueCurrentSession(); });
+    addEventListener('kana:remote-restored',()=>{ vocabProgress=loadVocabProgress(); skillProgress=repositories.mastery.getSkills(); nerdLedger=loadNerdLedger(); reloadGrammarCapabilities();showLastSession(); renderRanking(); updateLevelProgress(); });
+    showLastSession(); renderRanking(); updateLevelProgress();
+  </script>
+</body>
+</html>

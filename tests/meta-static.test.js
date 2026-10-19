@@ -1,0 +1,11 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+for(const file of ['dist/meta-core.js','dist/meta-ui.js'])new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const html=fs.readFileSync('dist/index.html','utf8'),auth=fs.readFileSync('dist/auth-sync.js','utf8'),endgames=fs.readFileSync('dist/endgames-ui.js','utf8'),meta=fs.readFileSync('dist/meta-ui.js','utf8');
+for(const needle of ['meta-core.js','meta-ui.js'])assert.ok(html.includes(needle));
+for(const needle of ['kana:attempt-recorded','meta-systems'])assert.ok(auth.includes(needle),needle);
+assert.ok(endgames.includes('kana:run-ended'));assert.ok(html.includes('kana:run-ended'));
+for(const label of ['Dependência de português','Amaldiçoados','NEMESIS','Cemitério','BOUNDARY'])assert.ok(meta.includes(label),label);
+assert.ok(html.includes("KANA_META?.isCursed('vocabulary'"),'itens amaldiçoados precisam voltar estrategicamente');
+assert.ok(meta.includes('Math.random()<.16'),'maldição aumenta prioridade sem dominar todas as questões');
+assert.ok(meta.includes("KANA_CLOUD.auth.current?.user?.id"),'runs de convidado não entram no Cemitério oficial');
+console.log('META: integração oficial, UI e seleção adaptativa aprovadas');

@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
+for(const file of ['dist/trial-core.js','dist/trial-ui.js'])new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const html=fs.readFileSync('dist/index.html','utf8'),ui=fs.readFileSync('dist/trial-ui.js','utf8'),auth=fs.readFileSync('dist/auth-sync.js','utf8'),insanity=fs.readFileSync('dist/insanity-core.js','utf8');
+for(const needle of ['trial-core.js?v=34','trial-ui.js?v=34'])assert.ok(html.includes(needle),needle);
+assert.ok(html.indexOf('meta-ui.js')<html.indexOf('trial-core.js'));
+assert.ok(html.indexOf('trial-ui.js')<html.indexOf('account-ui.js'));
+for(const needle of ['KANA_AUDIO_PROVIDER','excludeFromDaily:true','ignoreMeta:true','activeRun','kana:run-ended'])assert.ok(ui.includes(needle),needle);
+assert.ok(auth.includes('if(!meta.ignoreMeta)'),'provas globais não alimentam metassistemas pedagógicos');
+assert.ok(insanity.includes("status:'prepared-not-playable'"));
+assert.ok(insanity.includes('preservesInsanity:true'));
+console.log('TRIAL STATIC: integração, isolamento e preparação futura aprovados');

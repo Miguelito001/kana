@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const html=fs.readFileSync('dist/index.html','utf8');
+for(const file of ['dist/endgame-core.js','dist/endgames-ui.js']) new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const ui=fs.readFileSync('dist/endgames-ui.js','utf8'),corpus=html+ui;
+for(const needle of ['territoryScreen','challengeScreen','timer-track','KANA_ENDGAMES.openTerritory','endgame-core.js','endgames-ui.js']) assert.ok(corpus.includes(needle),needle);
+const order=['platform-core.js','endgame-core.js','insanity-core.js','endgames-ui.js','<script>'].map(value=>html.indexOf(value));
+assert.deepEqual(order,[...order].sort((a,b)=>a-b),'scripts precisam carregar antes do controlador principal');
+assert.ok(ui.includes('repositories.records'),'estatísticas usam repository próprio');
+assert.ok(!ui.includes('kana-daily-ranking'),'endgames não alteram ranking pedagógico');
+assert.ok(!ui.includes('kana-vocabulary-progress-v1'),'endgames não inflam mastery de vocabulário');
+assert.ok(html.includes('@media (min-width:600px)'),'breakpoint existente preservado');
+assert.ok(html.includes('@media (prefers-reduced-motion:reduce)'),'movimento reduzido preservado');
+console.log('ENDGAMES: integração, isolamento e estrutura responsiva aprovados');
